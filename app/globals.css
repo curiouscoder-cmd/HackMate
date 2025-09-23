@@ -67,13 +67,23 @@
     @apply bg-white rounded-lg border border-gray-200 p-3 hover:shadow-lg hover:border-gray-300 transition-all duration-200 transform hover:-translate-y-0.5 min-h-[60px];
   }
 
-  /* Premium Dashboard Animations */
-  .fade-in {
-    animation: fadeIn 0.6s ease-out forwards;
+  /* Design token helpers */
+  .text-foreground { @apply text-[#0f172a] dark:text-gray-100; }
+  .text-muted-foreground { @apply text-gray-500 dark:text-gray-400; }
+  .bg-muted { @apply bg-gray-100 dark:bg-gray-800; }
+  .border-border { @apply border-gray-200 dark:border-gray-700; }
+
+  /* Buttons */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl border border-transparent hover:border-border hover:bg-muted text-foreground transition-all duration-200;
   }
 
-  .slide-up {
-    animation: slideUp 0.8s ease-out forwards;
+  /* Typography tuning */
+  .section-title {
+    @apply text-2xl md:text-3xl font-semibold text-foreground tracking-tight;
+  }
+  .section-subtitle {
+    @apply text-sm text-muted-foreground;
   }
 
   .slide-in-left {
@@ -101,6 +111,12 @@
 
   .premium-card-dark {
     @apply bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl border border-gray-700 p-6 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+
+  /* Remove light gradient in dark mode for premium cards */
+  .dark .premium-card {
+    @apply bg-gray-900 border-gray-800;
+    background: none;
   }
 
   /* Animated progress bars */

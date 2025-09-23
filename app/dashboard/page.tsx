@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import DashboardStats from '@/components/DashboardStats'
 import PerformanceMetrics from '@/components/PerformanceMetrics'
 import IntegrationsPanel from '@/components/IntegrationsPanel'
+import { Sparkles, Target, Zap } from 'lucide-react'
 
 export const metadata = {
   title: 'AI Hack Mate - Advanced Dashboard',
@@ -12,125 +13,130 @@ export const metadata = {
 
 export default function DashboardPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <main className="min-h-screen bg-gradient-to-br from-background via-primary-soft/10 to-secondary-soft/10 dark:from-gray-950 dark:via-primary-900/10 dark:to-gray-900">
+      <div className="w-full">
         {/* Header with animation */}
         <div className="fade-in">
           <Header />
         </div>
         
-        {/* Dashboard Stats Overview */}
-        <div className="mt-8">
-          <DashboardStats />
-        </div>
-        
-        {/* System Status Section */}
-        <div className="mb-8 slide-up stagger-1">
-          <SystemStatus />
-        </div>
-        
-        {/* Main Dashboard Content - Enhanced Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
-          {/* Performance Metrics - Full width on mobile, half on lg, third on xl */}
-          <div className="lg:col-span-1">
-            <PerformanceMetrics />
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Dashboard Stats Overview */}
+          <div className="mb-8">
+            <DashboardStats />
           </div>
           
-          {/* Integrations Panel */}
-          <div className="lg:col-span-1">
-            <IntegrationsPanel />
+          {/* System Status Section */}
+          <div className="mb-8 slide-up stagger-1">
+            <SystemStatus />
           </div>
           
-          {/* Bulk Actions */}
-          <div className="lg:col-span-2 xl:col-span-1 fade-in stagger-1">
-            <BulkActions />
+          {/* Main Dashboard Content - Enhanced Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
+            {/* Performance Metrics - Full width on mobile, half on lg, third on xl */}
+            <div className="lg:col-span-1">
+              <PerformanceMetrics />
+            </div>
+            
+            {/* Integrations Panel */}
+            <div className="lg:col-span-1">
+              <IntegrationsPanel />
+            </div>
+            
+            {/* Bulk Actions */}
+            <div className="lg:col-span-2 xl:col-span-1 fade-in stagger-1">
+              <BulkActions />
+            </div>
           </div>
-        </div>
-        
-        {/* Additional Dashboard Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Quick Actions Card */}
-          <div className="premium-card fade-in stagger-3">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white text-lg">⚡</span>
+          
+          {/* Additional Dashboard Features Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Quick Actions Card */}
+            <div className="premium-card fade-in stagger-3">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-accent to-accent/80 rounded-xl flex items-center justify-center mr-3">
+                  <Sparkles className="w-5 h-5 text-accent-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
+                  <p className="text-sm text-muted-foreground">Common dashboard operations</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-                <p className="text-sm text-gray-500">Common dashboard operations</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <button className="btn-ghost p-4 h-auto flex flex-col items-center">
+                  <Target className="w-5 h-5 mb-2" />
+                  <span className="text-sm">New Task</span>
+                </button>
+                
+                <button className="btn-ghost p-4 h-auto flex flex-col items-center">
+                  <Zap className="w-5 h-5 mb-2" />
+                  <span className="text-sm">Quick Deploy</span>
+                </button>
+                
+                <button className="btn-ghost p-4 h-auto flex flex-col items-center">
+                  <span className="text-lg mb-1">📊</span>
+                  <span className="text-sm">Analytics</span>
+                </button>
+                
+                <button className="btn-ghost p-4 h-auto flex flex-col items-center">
+                  <span className="text-lg mb-1">⚙️</span>
+                  <span className="text-sm">Settings</span>
+                </button>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <button className="p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-200 transition-all duration-200 group text-left">
-                <div className="text-2xl mb-2">📊</div>
-                <div className="font-medium text-gray-900 group-hover:text-blue-700 text-sm">View Reports</div>
-              </button>
-              
-              <button className="p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:border-green-200 transition-all duration-200 group text-left">
-                <div className="text-2xl mb-2">⚙️</div>
-                <div className="font-medium text-gray-900 group-hover:text-green-700 text-sm">Settings</div>
-              </button>
-              
-              <button className="p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:border-purple-200 transition-all duration-200 group text-left">
-                <div className="text-2xl mb-2">🔍</div>
-                <div className="font-medium text-gray-900 group-hover:text-purple-700 text-sm">Analytics</div>
-              </button>
-              
-              <button className="p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 hover:border-orange-200 transition-all duration-200 group text-left">
-                <div className="text-2xl mb-2">📋</div>
-                <div className="font-medium text-gray-900 group-hover:text-orange-700 text-sm">Logs</div>
-              </button>
-            </div>
-          </div>
-          
-          {/* System Health Card */}
-          <div className="premium-card fade-in stagger-4">
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
-                <span className="text-white text-lg">💚</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">System Health</h3>
-                <p className="text-sm text-gray-500">Real-time system monitoring</p>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse mr-3"></div>
-                  <span className="text-sm font-medium text-gray-900">API Status</span>
+            {/* System Health Card */}
+            <div className="premium-card fade-in stagger-4">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-success-500 to-success-500/80 rounded-xl flex items-center justify-center mr-3">
+                  <span className="text-white text-lg">💚</span>
                 </div>
-                <span className="text-sm text-green-600 font-medium">Operational</span>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">System Health</h3>
+                  <p className="text-sm text-muted-foreground">Real-time system monitoring</p>
+                </div>
               </div>
               
-              <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse mr-3"></div>
-                  <span className="text-sm font-medium text-gray-900">Database</span>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">CPU Usage</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-success-500 to-success-500/80 w-3/4 rounded-full"></div>
+                    </div>
+                    <span className="text-sm font-medium text-green-600">75%</span>
+                  </div>
                 </div>
-                <span className="text-sm text-blue-600 font-medium">Connected</span>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 border border-purple-200">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse mr-3"></div>
-                  <span className="text-sm font-medium text-gray-900">AI Services</span>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Memory</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-warning-500 to-warning-500/80 w-2/3 rounded-full"></div>
+                    </div>
+                    <span className="text-sm font-medium text-warning-600">67%</span>
+                  </div>
                 </div>
-                <span className="text-sm text-purple-600 font-medium">Active</span>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Network</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-primary-500 to-secondary-soft w-1/2 rounded-full"></div>
+                    </div>
+                    <span className="text-sm font-medium text-primary-600">50%</span>
+                  </div>
+                </div>
+                
+                <div className="pt-2 border-t border-border">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Overall Status</span>
+                    <span className="text-green-600 font-medium">Healthy</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Footer Section */}
-        <div className="mt-12 text-center fade-in stagger-4">
-          <div className="inline-flex items-center space-x-2 text-sm text-gray-500">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span>All systems operational</span>
-            <span className="mx-2">•</span>
-            <span>Last updated: {new Date().toLocaleTimeString()}</span>
           </div>
         </div>
       </div>

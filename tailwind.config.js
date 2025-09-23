@@ -10,6 +10,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // App design tokens
+        background: '#ffffff',
+        foreground: '#0f172a',
+        border: '#e5e7eb',
+        muted: '#f3f4f6',
+        'muted-foreground': '#6b7280',
+        'primary-soft': '#3b82f6', // used with /10 in gradients
+        'secondary-soft': '#a78bfa',
+        accent: '#06b6d4',
+        'accent-foreground': '#ffffff',
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
