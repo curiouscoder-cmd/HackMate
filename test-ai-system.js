@@ -5,6 +5,10 @@
  * Run with: node test-ai-system.js
  */
 
+// Register ts-node to allow requiring TypeScript source files directly
+require('ts-node').register({ transpileOnly: true, compilerOptions: { module: 'commonjs' } });
+
+// Require the TypeScript module
 const { TaskRunner } = require('./lib/core/task-runner.ts');
 
 async function testAISystem() {
