@@ -17,6 +17,7 @@
     "@octokit/rest": "^20.0.2",
     "@pinecone-database/pinecone": "^6.1.2",
     "@slack/web-api": "^6.10.0",
+    "@types/uuid": "^10.0.0",
     "next": "^15.0.0",
     "openai": "^4.20.0",
     "react": "^18.0.0",

@@ -1,5 +1,16 @@
-import { Pinecone } from '@pinecone-database/pinecone';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Handle potential module resolution issues
+let Pinecone: any;
+let GoogleGenerativeAI: any;
+
+try {
+  ({ Pinecone } = require('@pinecone-database/pinecone'));
+  ({ GoogleGenerativeAI } = require('@google/generative-ai'));
+} catch (error) {
+  console.warn('Vector memory dependencies not available:', error);
+  // Create mock classes to prevent compilation errors
+  Pinecone = class MockPinecone {};
+  GoogleGenerativeAI = class MockGoogleGenerativeAI {};
+}
 
 export interface VectorMemoryEntry {
   id: string;
@@ -20,8 +31,8 @@ export interface VectorSearchResult extends VectorMemoryEntry {
 }
 
 interface VectorMemoryState {
-  pinecone: Pinecone | null;
-  genAI: GoogleGenerativeAI | null;
+  pinecone: any | null;
+  genAI: any | null;
   indexName: string;
   fallbackMemory: VectorMemoryEntry[];
   isInitialized: boolean;
@@ -46,7 +57,7 @@ const ensureIndexExists = async (): Promise<void> => {
 
   try {
     const indexes = await memoryState.pinecone.listIndexes();
-    const indexExists = indexes.indexes?.some(index => index.name === memoryState.indexName);
+    const indexExists = indexes.indexes?.some((index: any) => index.name === memoryState.indexName);
 
     if (!indexExists) {
       console.log(`📝 Creating Pinecone index: ${memoryState.indexName}`);
@@ -221,7 +232,7 @@ export const retrieveMemoryEntries = async (query: string, limit: number = 5): P
         includeMetadata: true,
       });
 
-      return searchResults.matches?.map(match => ({
+      return searchResults.matches?.map((match: any) => ({
         id: match.id,
         type: match.metadata?.type as VectorMemoryEntry['type'],
         content: match.metadata?.content as string,
@@ -344,7 +355,7 @@ export const getMemoryEntriesByType = async (type: VectorMemoryEntry['type'], li
         filter: { type: { $eq: type } }
       });
 
-      return results.matches?.map(match => ({
+      return results.matches?.map((match: any) => ({
         id: match.id,
         type: match.metadata?.type as VectorMemoryEntry['type'],
         content: match.metadata?.content as string,

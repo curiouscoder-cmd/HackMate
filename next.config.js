@@ -1,11 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Suppress workspace root warning
-  outputFileTracingRoot: __dirname,
-  
   // Optimize for production
   experimental: {
     optimizePackageImports: ['@google/generative-ai', 'openai', '@anthropic-ai/sdk'],
+  },
+  
+  // Handle cross-origin requests for development
+  async headers() {
+    return [
+      {
+        source: '/_next/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+        ],
+      },
+    ];
   },
   
   // Handle external packages

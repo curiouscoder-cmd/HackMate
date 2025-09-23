@@ -58,11 +58,16 @@ export default function BulkActions() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-        <span className="mr-2">🚀</span>
-        Bulk Actions
-      </h3>
+    <div className="premium-card">
+      <div className="flex items-center mb-6">
+        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
+          <span className="text-white text-lg">🚀</span>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Bulk Actions</h3>
+          <p className="text-sm text-gray-500">Manage multiple tasks at once</p>
+        </div>
+      </div>
 
       {message && (
         <div className={`mb-4 p-3 rounded-md ${
@@ -81,13 +86,13 @@ export default function BulkActions() {
         <button 
           onClick={handleRetryFailed}
           disabled={isPending}
-          className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
         >
-          <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center">
-            <span className="mr-2">🔄</span>
+          <div className="font-medium text-gray-900 flex items-center group-hover:text-blue-700">
+            <span className="mr-3 text-lg">🔄</span>
             Retry All Failed Tasks
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-gray-500 mt-1">
             Restart any tasks that have failed
           </div>
         </button>
@@ -95,36 +100,38 @@ export default function BulkActions() {
         <button 
           onClick={handleClearCompleted}
           disabled={isPending}
-          className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:border-green-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
         >
-          <div className="font-medium text-gray-900 dark:text-gray-100 flex items-center">
-            <span className="mr-2">🧹</span>
+          <div className="font-medium text-gray-900 flex items-center group-hover:text-green-700">
+            <span className="mr-3 text-lg">🧹</span>
             Clear Completed Tasks
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-sm text-gray-500 mt-1">
             Remove all completed tasks from view
           </div>
         </button>
 
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-          <div className="font-medium text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-            <span className="mr-2">📥</span>
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <div className="font-medium text-gray-900 mb-3 flex items-center">
+            <span className="mr-3 text-lg">📥</span>
             Export Tasks
           </div>
-          <div className="flex space-x-2">
+          <div className="flex space-x-3">
             <button 
               onClick={() => handleExport('json')}
               disabled={isPending}
-              className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              Export JSON
+              <div className="font-medium">Export JSON</div>
+              <div className="text-xs opacity-90">Structured data</div>
             </button>
             <button 
               onClick={() => handleExport('csv')}
               disabled={isPending}
-              className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              Export CSV
+              <div className="font-medium">Export CSV</div>
+              <div className="text-xs opacity-90">Spreadsheet format</div>
             </button>
           </div>
         </div>
