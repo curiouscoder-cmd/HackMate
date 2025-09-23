@@ -139,4 +139,17 @@ export class MemoryManager {
       timestamp: result.metadata.timestamp,
     }));
   }
+
+  // Get relevant context for a query (missing method)
+  async getRelevantContext(query: string, limit: number = 5): Promise<MemoryEntry[]> {
+    const results = await retrieveMemoryEntries(query, limit);
+    
+    return results.map((result: VectorSearchResult) => ({
+      id: result.id,
+      type: result.type,
+      content: result.content,
+      metadata: result.metadata,
+      timestamp: result.metadata.timestamp,
+    }));
+  }
 }

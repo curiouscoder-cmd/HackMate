@@ -1,4 +1,5 @@
 import { Task } from './planner-agent';
+import { getOptimalModel } from '../ai/model-config';
 
 export interface CodeGenerationResult {
   code: string;
@@ -155,7 +156,8 @@ const createAICode = async (task: Task, config: CoderConfig): Promise<CodeGenera
     // Dynamic import to avoid dependency issues
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(config.geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const optimalModel = getOptimalModel('CODING');
+    const model = genAI.getGenerativeModel({ model: optimalModel.primary.name });
     
     const prompt = `
       As a senior software developer, implement this task:

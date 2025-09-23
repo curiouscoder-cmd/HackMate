@@ -4,6 +4,7 @@ import { CodeGenerationResult, executeCoderTask, getCoderStatus } from '../agent
 import { DebugResult, debugTask, runTests, getDebuggerStatus } from '../agents/debugger-agent';
 import { PMUpdate, sendTaskUpdate, sendProjectSummary, getPMStatus } from '../agents/pm-agent';
 import { MemoryManager } from './memory-manager';
+import { analyzeAndCreatePR, GitHubConfig } from '../integrations/github-analyzer';
 
 export interface TaskRunnerConfig {
   enableAI?: boolean;
@@ -121,8 +122,10 @@ export class TaskRunner {
 
       let result: any;
 
-      // Execute based on agent type
-      switch (task.agent) {
+      // Execute task based on agent (normalize agent names)
+      const normalizedAgent = task.agent.toLowerCase().replace(/\s+agent$/i, '').trim();
+      
+      switch (normalizedAgent) {
         case 'planner':
           result = await this.executePlannerTask(task);
           break;
@@ -136,7 +139,7 @@ export class TaskRunner {
           result = await this.executePMTask(task);
           break;
         default:
-          throw new Error(`Unknown agent: ${task.agent}`);
+          throw new Error(`Unknown agent: ${task.agent} (normalized: ${normalizedAgent})`);
       }
 
       // Update task with results
@@ -267,12 +270,59 @@ export class TaskRunner {
     await this.executeTask(taskId);
   }
 
-  async searchMemory(query: string, limit: number = 10): Promise<any[]> {
+  async searchMemory(query: string, limit: number = 5) {
     if (!this.config.enableMemory) {
       return [];
     }
     
     return await this.memory.retrieve(query, limit);
+  }
+
+  // Create automated PR from problem description
+  async createAutomatedPR(problem: string, githubConfig?: GitHubConfig): Promise<string | null> {
+    try {
+      if (!this.config.enableGitHub) {
+        console.log('GitHub integration disabled');
+        return null;
+      }
+
+      const config: GitHubConfig = githubConfig || {
+        token: process.env.GITHUB_TOKEN || '',
+        owner: process.env.GITHUB_OWNER || '',
+        repo: process.env.GITHUB_REPO || ''
+      };
+
+      if (!config.token || !config.owner || !config.repo) {
+        console.error('GitHub configuration missing');
+        return null;
+      }
+
+      console.log(`🚀 Creating automated PR for: "${problem}"`);
+      
+      // Analyze repository and create PR
+      const prResult = await analyzeAndCreatePR(config, problem);
+      
+      // Store the PR creation in memory
+      if (this.config.enableMemory) {
+        await this.memory.addTaskContext(
+          'automated-pr',
+          `Created automated PR: ${problem}`,
+          {
+            prUrl: prResult.prUrl,
+            branchName: prResult.branchName,
+            filesCreated: prResult.filesCreated,
+            description: prResult.description
+          }
+        );
+      }
+
+      console.log(`✅ Automated PR created: ${prResult.prUrl}`);
+      return prResult.prUrl;
+
+    } catch (error) {
+      console.error('Failed to create automated PR:', error);
+      return null;
+    }
   }
 
   getAgentStatus() {

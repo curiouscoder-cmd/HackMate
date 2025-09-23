@@ -1,3 +1,5 @@
+import { getOptimalModel } from '../ai/model-config';
+
 export interface Task {
   id: string;
   title: string;
@@ -77,7 +79,8 @@ const createAIPlan = async (problem: string, apiKey: string, memoryManager?: any
     // Dynamic import to avoid dependency issues
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const optimalModel = getOptimalModel('PLANNING');
+    const model = genAI.getGenerativeModel({ model: optimalModel.primary.name });
     
     // Get relevant context from memory
     let contextInfo = '';

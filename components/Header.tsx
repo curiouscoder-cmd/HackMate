@@ -35,8 +35,8 @@ export default function Header() {
               href="/" 
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 pathname === '/' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               Home
@@ -45,11 +45,31 @@ export default function Header() {
               href="/dashboard" 
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 pathname === '/dashboard' 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               Dashboard
+            </Link>
+            <Link 
+              href="/github" 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                pathname === '/github' 
+                  ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              🚀 GitHub AI
+            </Link>
+            <Link 
+              href="/analytics" 
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                pathname === '/analytics' 
+                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              Analytics
             </Link>
           </nav>
           

@@ -12,6 +12,8 @@ try {
   GoogleGenerativeAI = class MockGoogleGenerativeAI {};
 }
 
+import { getOptimalModel } from '../ai/model-config';
+
 export interface VectorMemoryEntry {
   id: string;
   type: 'task' | 'decision' | 'code' | 'error' | 'context';
@@ -115,7 +117,8 @@ const generateEmbedding = async (text: string): Promise<number[]> => {
   }
 
   try {
-    const model = memoryState.genAI.getGenerativeModel({ model: 'embedding-001' });
+    const optimalModel = getOptimalModel('EMBEDDING');
+    const model = memoryState.genAI.getGenerativeModel({ model: optimalModel.primary.name });
     const result = await model.embedContent(text);
     return result.embedding.values;
   } catch (error) {
@@ -189,14 +192,44 @@ export const storeMemoryEntry = async (entry: Omit<VectorMemoryEntry, 'id' | 'em
 
       // Store in Pinecone
       const index = memoryState.pinecone.index(memoryState.indexName);
+      
+      // Sanitize metadata for Pinecone (only strings, numbers, booleans, or arrays of strings)
+      const sanitizedMetadata: Record<string, any> = {
+        type: entry.type,
+        content: entry.content.substring(0, 40000), // Pinecone has size limits
+        timestamp: entry.metadata.timestamp,
+      };
+
+      // Add other metadata fields, converting complex objects to strings
+      Object.entries(entry.metadata).forEach(([key, value]) => {
+        if (key === 'timestamp') return; // Already added
+        
+        if (typeof value === 'string') {
+          sanitizedMetadata[key] = value.substring(0, 1000); // Limit string length
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          sanitizedMetadata[key] = value;
+        } else if (Array.isArray(value)) {
+          // Convert array to string representation
+          const stringArray = value.map(item => 
+            typeof item === 'string' ? item : String(item)
+          ).slice(0, 10); // Limit array size
+          sanitizedMetadata[key] = stringArray.join(', ').substring(0, 1000);
+        } else if (value !== null && value !== undefined) {
+          // Convert complex objects to JSON strings with size limit
+          try {
+            const jsonString = JSON.stringify(value);
+            sanitizedMetadata[key] = jsonString.substring(0, 1000);
+          } catch (error) {
+            // If JSON.stringify fails, convert to string
+            sanitizedMetadata[key] = String(value).substring(0, 1000);
+          }
+        }
+      });
+
       await index.upsert([{
         id,
         values: embedding,
-        metadata: {
-          type: entry.type,
-          content: entry.content,
-          ...entry.metadata,
-        }
+        metadata: sanitizedMetadata
       }]);
 
       console.log(`📝 Stored memory entry in Pinecone: ${id}`);
@@ -288,15 +321,44 @@ export const updateMemoryEntry = async (id: string, updates: Partial<VectorMemor
         embedding = await generateEmbedding(updatedContent);
       }
 
+      // Sanitize metadata for Pinecone
+      const sanitizedMetadata: Record<string, any> = {
+        type: updates.type || existingEntry.metadata?.type || 'context',
+        content: updatedContent.substring(0, 40000),
+        timestamp: updatedMetadata.timestamp,
+      };
+
+      // Add other metadata fields, converting complex objects to strings
+      Object.entries(updatedMetadata).forEach(([key, value]) => {
+        if (key === 'timestamp' || key === 'type' || key === 'content') return; // Already added
+        
+        if (typeof value === 'string') {
+          sanitizedMetadata[key] = value.substring(0, 1000); // Limit string length
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          sanitizedMetadata[key] = value;
+        } else if (Array.isArray(value)) {
+          // Convert array to string representation
+          const stringArray = value.map(item => 
+            typeof item === 'string' ? item : String(item)
+          ).slice(0, 10); // Limit array size
+          sanitizedMetadata[key] = stringArray.join(', ').substring(0, 1000);
+        } else if (value !== null && value !== undefined) {
+          // Convert complex objects to JSON strings with size limit
+          try {
+            const jsonString = JSON.stringify(value);
+            sanitizedMetadata[key] = jsonString.substring(0, 1000);
+          } catch (error) {
+            // If JSON.stringify fails, convert to string
+            sanitizedMetadata[key] = String(value).substring(0, 1000);
+          }
+        }
+      });
+
       // Upsert updated entry
       await index.upsert([{
         id,
         values: embedding,
-        metadata: {
-          type: updates.type || existingEntry.metadata?.type || 'context',
-          content: updatedContent,
-          ...updatedMetadata,
-        }
+        metadata: sanitizedMetadata
       }]);
 
       return true;

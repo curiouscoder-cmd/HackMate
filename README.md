@@ -2,21 +2,18 @@
 
 A multi-agent system that acts like a real teammate, automatically planning, coding, debugging, and managing software development tasks.
 
-## 🌟 Features
+## 🚀 Features
 
-### Core Features (MVP)
-- **🖥 Live Task Board**: Real-time task tracking with Next.js SSR
-- **🧠 Planner Agent**: Converts problems into prioritized tasks using Gemini AI
-- **👨‍💻 Coder Agent**: Generates code and creates GitHub PRs automatically
-- **🐞 Debugger Agent**: Analyzes failures and suggests fixes
-- **📣 PM Agent**: Sends Slack notifications and progress updates
-- **💾 Memory System**: Persistent context storage with ChromaDB
-
-### Advanced Features
-- **GitHub Integration**: Automatic branch creation and PR management
-- **Slack Integration**: Real-time notifications and summaries
-- **Vector Memory**: Semantic search for past decisions and code
-- **Multi-Agent Orchestration**: Intelligent task routing and execution
+- **Multi-Agent System**: Planner, Coder, Debugger, and PM agents working together
+- **AI-Powered**: Uses Google Gemini Pro for intelligent task planning and execution
+- **Real-time Updates**: Live task status updates and agent communication
+- **Memory System**: Persistent context and learning from previous tasks
+- **🆕 GitHub AI Workflow**: Automated repository analysis and PR creation
+- **Slack Integration**: Team notifications and updates
+- **Modern UI**: Clean, responsive interface with real-time updates
+- **Multi-Model AI**: Support for GPT-4, Claude 3, and Gemini models
+- **Advanced Analytics**: Performance tracking and cost analysis
+- **Dark Mode**: Full dark mode support with system preference detection
 
 ## 🚀 Quick Start
 

@@ -1,4 +1,5 @@
 import { Task } from './planner-agent';
+import { getOptimalModel } from '../ai/model-config';
 
 export interface DebugResult {
   issues: string[];
@@ -71,7 +72,8 @@ const createAIDebug = async (task: Task, code: string | undefined, apiKey: strin
     // Dynamic import to avoid dependency issues
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const optimalModel = getOptimalModel('DEBUGGING');
+    const model = genAI.getGenerativeModel({ model: optimalModel.primary.name });
     
     const prompt = `
       As a senior QA engineer and debugger, analyze this task and code:
