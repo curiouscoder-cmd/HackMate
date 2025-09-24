@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { Check, X, Target as TargetIcon, Rocket, Lightbulb } from 'lucide-react'
 import { createTaskAction } from '@/lib/actions/task-actions'
 
 export default function ProblemInputSSR() {
@@ -45,8 +46,8 @@ export default function ProblemInputSSR() {
 
   return (
     <div className="card">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
-        🎯 Problem Statement
+      <h2 className="text-xl font-semibold text-gray-900 mb-4 inline-flex items-center">
+        <TargetIcon className="w-5 h-5 mr-2" /> Problem Statement
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,7 +70,7 @@ export default function ProblemInputSSR() {
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-red-400">❌</span>
+                <span className="text-red-500"><X className="w-4 h-4" /></span>
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-700">{error}</p>
@@ -82,7 +83,7 @@ export default function ProblemInputSSR() {
           <div className="p-3 bg-green-50 border border-green-200 rounded-md">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="text-green-400">✅</span>
+                <span className="text-green-500"><Check className="w-4 h-4" /></span>
               </div>
               <div className="ml-3">
                 <p className="text-sm text-green-700">{success}</p>
@@ -94,7 +95,7 @@ export default function ProblemInputSSR() {
         <button
           type="submit"
           disabled={!problem.trim() || isPending}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          className="btn-solid w-full disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? (
             <span className="flex items-center justify-center">
@@ -105,13 +106,13 @@ export default function ProblemInputSSR() {
               Creating Tasks...
             </span>
           ) : (
-            '🚀 Start Planning'
+            <span className="inline-flex items-center justify-center"><Rocket className="w-5 h-5 mr-2" /> Start Planning</span>
           )}
         </button>
       </form>
 
       <div className="mt-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">💡 Example Problems:</h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3 inline-flex items-center"><Lightbulb className="w-4 h-4 mr-2" /> Example Problems:</h3>
         <div className="space-y-2">
           {exampleProblems.map((example, index) => (
             <button

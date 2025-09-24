@@ -10,16 +10,22 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+    @apply bg-white rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-all duration-200;
   }
   
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  /* Unified buttons */
+  .btn-solid {
+    @apply inline-flex items-center justify-center rounded-xl bg-primary-900 text-white font-semibold px-6 py-3 leading-none shadow-sm hover:bg-primary-800 active:bg-primary-700 transition-colors;
   }
-  
-  .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200;
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-xl border border-border bg-transparent text-foreground font-semibold px-6 py-3 leading-none hover:bg-muted transition-colors;
   }
+
+  /* Backwards compatibility mappings */
+  .btn-primary { @apply btn-solid; }
+  .btn-secondary { @apply btn-outline; }
+  .btn-solid-dark { @apply btn-solid; }
+  .btn-outline-dark { @apply btn-outline; }
   
   .status-badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
@@ -47,24 +53,24 @@
   }
   
   .task-section-queued {
-    @apply bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300;
+    @apply bg-gradient-to-br from-gray-50 to-gray-100 border-border;
   }
   
   .task-section-in-progress {
-    @apply bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300;
+    @apply bg-gradient-to-br from-blue-50 to-blue-100 border-border;
   }
   
   .task-section-done {
-    @apply bg-gradient-to-br from-green-50 to-green-100 border-green-300;
+    @apply bg-gradient-to-br from-green-50 to-green-100 border-border;
   }
   
   .task-section-failed {
-    @apply bg-gradient-to-br from-red-50 to-red-100 border-red-300;
+    @apply bg-gradient-to-br from-red-50 to-red-100 border-border;
   }
 
   /* Compact rectangular task card styling */
   .task-card {
-    @apply bg-white rounded-lg border border-gray-200 p-3 hover:shadow-lg hover:border-gray-300 transition-all duration-200 transform hover:-translate-y-0.5 min-h-[60px];
+    @apply bg-white rounded-xl border border-border p-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-h-[60px];
   }
 
   /* Design token helpers */
@@ -76,6 +82,23 @@
   /* Buttons */
   .btn-ghost {
     @apply inline-flex items-center justify-center rounded-xl border border-transparent hover:border-border hover:bg-muted text-foreground transition-all duration-200;
+  }
+
+  .btn-outline-dark {
+    @apply inline-flex items-center justify-center h-9 px-4 rounded-lg border border-border text-foreground hover:bg-muted transition-colors;
+  }
+
+  .btn-solid-dark {
+    @apply inline-flex items-center justify-center h-9 px-4 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors dark:bg-gray-700 dark:hover:bg-gray-600;
+  }
+
+  /* Navbar links */
+  .nav-link {
+    @apply px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors;
+  }
+
+  .nav-link-active {
+    @apply bg-muted text-foreground font-medium;
   }
 
   /* Typography tuning */
@@ -105,8 +128,8 @@
 
   /* Premium card styling */
   .premium-card {
-    @apply bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    @apply bg-white rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5;
+    background: none;
   }
 
   .premium-card-dark {
@@ -116,7 +139,20 @@
   /* Remove light gradient in dark mode for premium cards */
   .dark .premium-card {
     @apply bg-gray-900 border-gray-800;
-    background: none;
+  }
+
+  /* Feature card and icon badge (like reference design) */
+  .feature-card {
+    @apply premium-card p-8 text-center;
+  }
+  .icon-badge {
+    @apply w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 bg-muted/50 text-primary-700 border border-border;
+  }
+  .feature-title {
+    @apply text-lg md:text-xl font-semibold text-foreground mb-2;
+  }
+  .feature-desc {
+    @apply text-sm text-muted-foreground leading-relaxed;
   }
 
   /* Animated progress bars */

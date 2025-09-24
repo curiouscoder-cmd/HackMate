@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { BarChart3, Timer, Wallet, TrendingUp, Lightbulb, Bot, X } from 'lucide-react'
 import { getTasksAction } from '@/lib/actions/task-actions';
 import { generateAnalytics } from '@/lib/analytics/task-analytics';
 import Header from '@/components/Header';
@@ -10,7 +11,7 @@ async function AnalyticsContent() {
     return (
       <div className="premium-card border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
         <div className="flex items-center">
-          <span className="text-red-500 text-lg mr-2">❌</span>
+          <X className="w-4 h-4 text-red-500 mr-2" />
           <span className="text-foreground font-medium">Analytics Unavailable</span>
         </div>
         <p className="text-red-600 dark:text-red-400 text-sm mt-1">{result.error}</p>
@@ -30,7 +31,7 @@ async function AnalyticsContent() {
               <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
               <p className="text-3xl font-bold text-foreground">{analytics.overview.totalTasks}</p>
             </div>
-            <div className="text-4xl">📊</div>
+            <div className="text-4xl"><BarChart3 className="w-6 h-6 text-foreground/80" /></div>
           </div>
         </div>
 
@@ -40,7 +41,7 @@ async function AnalyticsContent() {
               <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
               <p className="text-3xl font-bold text-green-600">{analytics.overview.successRate.toFixed(1)}%</p>
             </div>
-            <div className="text-4xl">✅</div>
+            <div className="text-4xl"><svg className="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
           </div>
         </div>
 
@@ -50,7 +51,7 @@ async function AnalyticsContent() {
               <p className="text-sm font-medium text-muted-foreground">Avg. Time</p>
               <p className="text-3xl font-bold text-blue-600">{analytics.overview.avgCompletionTime.toFixed(1)}m</p>
             </div>
-            <div className="text-4xl">⏱️</div>
+            <div className="text-4xl"><Timer className="w-6 h-6 text-blue-600" /></div>
           </div>
         </div>
 
@@ -60,7 +61,7 @@ async function AnalyticsContent() {
               <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
               <p className="text-3xl font-bold text-purple-600">${analytics.costs.totalCost.toFixed(2)}</p>
             </div>
-            <div className="text-4xl">💰</div>
+            <div className="text-4xl"><Wallet className="w-6 h-6 text-purple-600" /></div>
           </div>
         </div>
       </div>
@@ -68,7 +69,7 @@ async function AnalyticsContent() {
       {/* Agent Performance */}
       <div className="premium-card">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
-          <span className="mr-2">🤖</span>
+          <Bot className="w-5 h-5 mr-2" />
           Agent Performance
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -101,7 +102,7 @@ async function AnalyticsContent() {
       {/* Daily Trends */}
       <div className="premium-card">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
-          <span className="mr-2">📈</span>
+          <TrendingUp className="w-5 h-5 mr-2" />
           Daily Trends (Last 7 Days)
         </h3>
         <div className="overflow-x-auto">
@@ -131,7 +132,7 @@ async function AnalyticsContent() {
       {/* Productivity Insights */}
       <div className="premium-card">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
-          <span className="mr-2">💡</span>
+          <Lightbulb className="w-5 h-5 mr-2" />
           Productivity Insights
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -164,7 +165,7 @@ async function AnalyticsContent() {
       {analytics.costs.totalCost > 0 && (
         <div className="premium-card">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center">
-            <span className="mr-2">💰</span>
+            <Wallet className="w-5 h-5 mr-2" />
             Cost Breakdown
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

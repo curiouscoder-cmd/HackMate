@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { Check } from 'lucide-react';
 import { getTasksAction } from '@/lib/actions/task-actions';
 import CollapsibleTaskSection from './CollapsibleTaskSection';
 import { Task } from '@/lib/agents/planner-agent';
@@ -54,7 +55,7 @@ async function TaskBoardContent() {
   const statusConfig = {
     queued: { title: '📋 Queued', color: 'task-section task-section-queued' },
     in_progress: { title: '⚡ In Progress', color: 'task-section task-section-in-progress' },
-    done: { title: '✅ Done', color: 'task-section task-section-done' },
+    done: { title: 'Done', color: 'task-section task-section-done' },
     failed: { title: '❌ Failed', color: 'task-section task-section-failed' },
   };
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { Check, RotateCw, Trash2, Download } from 'lucide-react'
 import { bulkRetryFailedTasksAction, clearCompletedTasksAction, exportTasksAction } from '@/lib/actions/task-actions'
 
 export default function BulkActions() {
@@ -76,7 +77,7 @@ export default function BulkActions() {
             : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
         }`}>
           <div className="flex items-center">
-            <span className="mr-2">{message.type === 'success' ? '✅' : '❌'}</span>
+            <span className="mr-2">{message.type === 'success' ? <Check className="w-4 h-4" /> : '❌'}</span>
             <span className="text-sm">{message.text}</span>
           </div>
         </div>
@@ -86,13 +87,13 @@ export default function BulkActions() {
         <button 
           onClick={handleRetryFailed}
           disabled={isPending}
-          className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="btn-outline w-full text-left disabled:opacity-50 disabled:cursor-not-allowed group"
         >
-          <div className="font-medium text-gray-900 flex items-center group-hover:text-blue-700">
-            <span className="mr-3 text-lg">🔄</span>
+          <div className="font-medium text-foreground flex items-center">
+            <RotateCw className="w-4 h-4 mr-2" />
             Retry All Failed Tasks
           </div>
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="text-sm text-muted-foreground mt-1">
             Restart any tasks that have failed
           </div>
         </button>
@@ -100,38 +101,36 @@ export default function BulkActions() {
         <button 
           onClick={handleClearCompleted}
           disabled={isPending}
-          className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:border-green-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="btn-outline w-full text-left disabled:opacity-50 disabled:cursor-not-allowed group"
         >
-          <div className="font-medium text-gray-900 flex items-center group-hover:text-green-700">
-            <span className="mr-3 text-lg">🧹</span>
+          <div className="font-medium text-foreground flex items-center">
+            <Trash2 className="w-4 h-4 mr-2" />
             Clear Completed Tasks
           </div>
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="text-sm text-muted-foreground mt-1">
             Remove all completed tasks from view
           </div>
         </button>
 
         <div className="border-t border-gray-200 pt-4 mt-4">
           <div className="font-medium text-gray-900 mb-3 flex items-center">
-            <span className="mr-3 text-lg">📥</span>
+            <Download className="w-4 h-4 mr-2" />
             Export Tasks
           </div>
           <div className="flex space-x-3">
             <button 
               onClick={() => handleExport('json')}
               disabled={isPending}
-              className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="flex-1 btn-solid text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="font-medium">Export JSON</div>
-              <div className="text-xs opacity-90">Structured data</div>
+              <div className="font-semibold">Export JSON</div>
             </button>
             <button 
               onClick={() => handleExport('csv')}
               disabled={isPending}
-              className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="flex-1 btn-outline text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="font-medium">Export CSV</div>
-              <div className="text-xs opacity-90">Spreadsheet format</div>
+              <div className="font-semibold">Export CSV</div>
             </button>
           </div>
         </div>

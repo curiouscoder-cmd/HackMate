@@ -17,7 +17,7 @@ export default function DashboardPage() {
       <div className="w-full">
         {/* Header with animation */}
         <div className="fade-in">
-          <Header />
+          <Header fullWidth />
         </div>
         
         <div className="max-w-7xl mx-auto px-6 py-8">

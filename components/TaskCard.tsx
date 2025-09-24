@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, ReactNode } from 'react'
+import { Brain, Code2, Bug, Megaphone, Bot, RotateCw, ClipboardList } from 'lucide-react'
 import { retryTaskAction } from '@/lib/actions/task-actions'
 
 interface Task {
@@ -33,13 +34,13 @@ export default function TaskCard({ task }: TaskCardProps) {
     })
   }
 
-  const getAgentIcon = (agent: string) => {
+  const getAgentIcon = (agent: string): ReactNode => {
     switch (agent) {
-      case 'planner': return '🧠'
-      case 'coder': return '👨‍💻'
-      case 'debugger': return '🐞'
-      case 'pm': return '📣'
-      default: return '🤖'
+      case 'planner': return <Brain className="w-4 h-4 text-primary-700" />
+      case 'coder': return <Code2 className="w-4 h-4 text-primary-700" />
+      case 'debugger': return <Bug className="w-4 h-4 text-primary-700" />
+      case 'pm': return <Megaphone className="w-4 h-4 text-primary-700" />
+      default: return <Bot className="w-4 h-4 text-primary-700" />
     }
   }
 
@@ -64,7 +65,7 @@ export default function TaskCard({ task }: TaskCardProps) {
     <div className="task-card">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 flex-1 min-w-0">
-          <span className="text-sm flex-shrink-0">{getAgentIcon(task.agent)}</span>
+          <span className="flex-shrink-0">{getAgentIcon(task.agent)}</span>
           <div className="flex-1 min-w-0">
             <h4 className="font-medium text-gray-900 text-sm truncate">
               {task.title}
@@ -81,17 +82,17 @@ export default function TaskCard({ task }: TaskCardProps) {
             <button
               onClick={handleRetry}
               disabled={isPending}
-              className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50 text-xs"
+              className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50 text-xs inline-flex items-center"
             >
-              {isPending ? '🔄' : '🔁'}
+              <RotateCw className={`w-4 h-4 ${isPending ? 'animate-spin' : ''}`} />
             </button>
           )}
           {task.logs.length > 0 && (
             <button
               onClick={() => setShowLogs(!showLogs)}
-              className="text-blue-600 hover:text-blue-700 font-medium text-xs"
+              className="text-blue-600 hover:text-blue-700 font-medium text-xs inline-flex items-center"
             >
-              📋 {task.logs.length}
+              <ClipboardList className="w-4 h-4 mr-1" />{task.logs.length}
             </button>
           )}
           <span className={`status-badge ${getStatusColor(task.status)} text-xs px-2 py-0.5 flex-shrink-0`}>

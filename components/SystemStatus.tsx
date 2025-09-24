@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { Check, X } from 'lucide-react';
 import { getAgentStatusAction } from '@/lib/actions/task-actions';
 
 async function SystemStatusContent() {
@@ -8,7 +9,7 @@ async function SystemStatusContent() {
     return (
       <div className="premium-card border border-red-200 bg-red-50">
         <div className="flex items-center">
-          <span className="text-red-500 text-lg mr-2">❌</span>
+          <X className="text-red-500 w-4 h-4 mr-2" />
           <span className="text-foreground font-medium">System Status Unavailable</span>
         </div>
         <p className="text-red-600 text-sm mt-1">{result.error}</p>
@@ -40,13 +41,13 @@ async function SystemStatusContent() {
         </div>
         <div className="text-center p-3 rounded-lg bg-muted hover:shadow-md transition-shadow">
           <div className="text-2xl font-bold text-purple-600">
-            {agents.config?.enableAI ? '✅' : '❌'}
+            {agents.config?.enableAI ? <Check className="w-5 h-5 text-green-600 inline-block" /> : <X className="w-5 h-5 text-red-600 inline-block" />}
           </div>
           <div className="text-sm text-muted-foreground">AI Enabled</div>
         </div>
         <div className="text-center p-3 rounded-lg bg-muted hover:shadow-md transition-shadow">
           <div className="text-2xl font-bold text-orange-600">
-            {agents.memory?.status === 'ready' ? '✅' : '❌'}
+            {agents.memory?.status === 'ready' ? <Check className="w-5 h-5 text-green-600 inline-block" /> : <X className="w-5 h-5 text-red-600 inline-block" />}
           </div>
           <div className="text-sm text-muted-foreground">Memory System</div>
         </div>
@@ -70,7 +71,7 @@ async function SystemStatusContent() {
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-foreground capitalize">{key}</h4>
                 <span className={`text-lg ${isHealthy ? 'text-green-500' : 'text-red-500'}`}>
-                  {isHealthy ? '✅' : '❌'}
+                  {isHealthy ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
                 </span>
               </div>
               
@@ -95,16 +96,44 @@ async function SystemStatusContent() {
               
               <div className="text-xs text-muted-foreground space-y-1">
                 {agentData.aiEnabled !== undefined && (
-                  <div>AI: {agentData.aiEnabled ? '✅' : '❌'}</div>
+                  <div className="inline-flex items-center gap-1">
+                    <span>AI:</span>
+                    {agentData.aiEnabled ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <X className="w-4 h-4 text-red-600" />
+                    )}
+                  </div>
                 )}
                 {agentData.githubEnabled !== undefined && (
-                  <div>GitHub: {agentData.githubEnabled ? '✅' : '❌'}</div>
+                  <div className="inline-flex items-center gap-1">
+                    <span>GitHub:</span>
+                    {agentData.githubEnabled ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <X className="w-4 h-4 text-red-600" />
+                    )}
+                  </div>
                 )}
                 {agentData.slackEnabled !== undefined && (
-                  <div>Slack: {agentData.slackEnabled ? '✅' : '❌'}</div>
+                  <div className="inline-flex items-center gap-1">
+                    <span>Slack:</span>
+                    {agentData.slackEnabled ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <X className="w-4 h-4 text-red-600" />
+                    )}
+                  </div>
                 )}
                 {agentData.chromaEnabled !== undefined && (
-                  <div>ChromaDB: {agentData.chromaEnabled ? '✅' : '❌'}</div>
+                  <div className="inline-flex items-center gap-1">
+                    <span>ChromaDB:</span>
+                    {agentData.chromaEnabled ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <X className="w-4 h-4 text-red-600" />
+                    )}
+                  </div>
                 )}
               </div>
             </div>

@@ -10,27 +10,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // App design tokens
+        // App design tokens (Fusebase-like deep teal theme)
         background: '#ffffff',
-        foreground: '#0f172a',
+        foreground: '#0b1e1d',
         border: '#e5e7eb',
         muted: '#f3f4f6',
         'muted-foreground': '#6b7280',
-        'primary-soft': '#3b82f6', // used with /10 in gradients
-        'secondary-soft': '#a78bfa',
-        accent: '#06b6d4',
+        'primary-soft': '#14b8a6', // teal/emerald for soft gradients
+        'secondary-soft': '#0f766e',
+        accent: '#0f766e',
         'accent-foreground': '#ffffff',
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
         },
         success: {
           50: '#f0fdf4',
