@@ -24,6 +24,9 @@ interface WorkflowResult {
     changes: string[];
     errors: string[];
     pullRequestUrl?: string;
+    readOnlyMode?: boolean;
+    suggestions?: string[];
+    codeAnalysis?: string;
   };
 }
 
@@ -366,12 +369,12 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
               {result.data.changes.length > 0 && (
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                    {result.data.readOnlyMode ? '🔍 Analysis Results' : '✨ Changes Made'}
+                    {result.data?.readOnlyMode ? '🔍 Analysis Results' : '✨ Changes Made'}
                   </h4>
                   <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                     {result.data.changes.map((change, index) => (
                       <li key={index} className="flex items-start">
-                        <span className={`mr-2 ${result.data.readOnlyMode ? 'text-blue-500' : 'text-green-500'}`}>•</span>
+                        <span className={`mr-2 ${result.data?.readOnlyMode ? 'text-blue-500' : 'text-green-500'}`}>•</span>
                         {change}
                       </li>
                     ))}
@@ -380,11 +383,11 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
               )}
 
               {/* Read-only Mode Suggestions */}
-              {result.data.suggestions && result.data.suggestions.length > 0 && (
+              {result.data?.suggestions && result.data.suggestions.length > 0 && (
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">💡 Suggestions</h4>
                   <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                    {result.data.suggestions.map((suggestion, index) => (
+                    {result.data?.suggestions?.map((suggestion: string, index: number) => (
                       <li key={index} className="flex items-start">
                         <span className="text-yellow-500 mr-2">•</span>
                         {suggestion}
@@ -395,11 +398,11 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
               )}
 
               {/* Code Analysis */}
-              {result.data.codeAnalysis && (
+              {result.data?.codeAnalysis && (
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">📊 Detailed Analysis</h4>
                   <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <pre className="whitespace-pre-wrap font-mono text-xs">{result.data.codeAnalysis}</pre>
+                    <pre className="whitespace-pre-wrap font-mono text-xs">{result.data?.codeAnalysis}</pre>
                   </div>
                 </div>
               )}
