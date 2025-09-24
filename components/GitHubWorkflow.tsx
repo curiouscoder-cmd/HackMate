@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import AIStatusIndicator from './AIStatusIndicator';
 
 interface GitHubWorkflowProps {
   onWorkflowStart?: () => void;
@@ -36,6 +37,8 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<WorkflowResult | null>(null);
   const [repoAnalysis, setRepoAnalysis] = useState<any>(null);
+  const [showAIStatus, setShowAIStatus] = useState(false);
+  const [currentAITask, setCurrentAITask] = useState<string>('');
 
   const analyzeRepository = async () => {
     if (!repositoryUrl.trim()) {
@@ -71,9 +74,13 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
 
     setIsLoading(true);
     setResult(null);
+    setShowAIStatus(true);
+    setCurrentAITask('Starting GitHub workflow...');
     onWorkflowStart?.();
 
     try {
+      setCurrentAITask('Initializing AI agents...');
+      
       const response = await fetch('/api/github/workflow', {
         method: 'POST',
         headers: {
@@ -90,10 +97,11 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
 
       const data = await response.json();
       setResult(data);
+      setCurrentAITask('');
       onWorkflowComplete?.(data);
-
     } catch (error) {
       console.error('Workflow error:', error);
+      setCurrentAITask('');
       const errorResult = {
         success: false,
         message: 'Failed to execute workflow',
@@ -103,6 +111,8 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
       onWorkflowComplete?.(errorResult);
     } finally {
       setIsLoading(false);
+      // Keep AI status visible for a moment to show completion
+      setTimeout(() => setShowAIStatus(false), 3000);
     }
   };
 
@@ -355,15 +365,42 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
               {/* Changes Made */}
               {result.data.changes.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">✨ Changes Made</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                    {result.data.readOnlyMode ? '🔍 Analysis Results' : '✨ Changes Made'}
+                  </h4>
                   <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                     {result.data.changes.map((change, index) => (
                       <li key={index} className="flex items-start">
-                        <span className="text-green-500 mr-2">•</span>
+                        <span className={`mr-2 ${result.data.readOnlyMode ? 'text-blue-500' : 'text-green-500'}`}>•</span>
                         {change}
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Read-only Mode Suggestions */}
+              {result.data.suggestions && result.data.suggestions.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">💡 Suggestions</h4>
+                  <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                    {result.data.suggestions.map((suggestion, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-yellow-500 mr-2">•</span>
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Code Analysis */}
+              {result.data.codeAnalysis && (
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">📊 Detailed Analysis</h4>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                    <pre className="whitespace-pre-wrap font-mono text-xs">{result.data.codeAnalysis}</pre>
+                  </div>
                 </div>
               )}
 
@@ -385,6 +422,13 @@ export default function GitHubWorkflow({ onWorkflowStart, onWorkflowComplete }: 
           )}
         </div>
       )}
+      
+      {/* AI Status Indicator */}
+      <AIStatusIndicator 
+        isActive={showAIStatus || isLoading}
+        currentTask={currentAITask}
+        onClose={() => setShowAIStatus(false)}
+      />
     </div>
   );
 }

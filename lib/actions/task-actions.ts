@@ -6,18 +6,48 @@ import { Task } from '@/lib/agents/planner-agent';
 
 // Global task runner instance for server actions
 let taskRunnerInstance: TaskRunner | null = null;
+let initializationPromise: Promise<TaskRunner> | null = null;
 
+// Optimized task runner getter with singleton pattern and lazy initialization
 async function getTaskRunner(): Promise<TaskRunner> {
-  if (!taskRunnerInstance) {
-    taskRunnerInstance = new TaskRunner({
-      enableAI: !!process.env.GEMINI_API_KEY,
-      enableGitHub: !!process.env.GITHUB_TOKEN,
-      enableSlack: !!process.env.SLACK_BOT_TOKEN,
-      enableMemory: !!process.env.CHROMA_URL
-    });
-    await taskRunnerInstance.initialize();
+  if (taskRunnerInstance) {
+    return taskRunnerInstance;
   }
-  return taskRunnerInstance;
+
+  // If initialization is already in progress, wait for it
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // Start initialization
+  initializationPromise = (async () => {
+    try {
+      console.log('🚀 Initializing TaskRunner...');
+      const startTime = Date.now();
+      
+      taskRunnerInstance = new TaskRunner({
+        enableAI: !!process.env.GEMINI_API_KEY,
+        enableGitHub: !!process.env.GITHUB_TOKEN,
+        enableSlack: !!process.env.SLACK_BOT_TOKEN,
+        enableMemory: !!process.env.PINECONE_API_KEY
+      });
+      
+      await taskRunnerInstance.initialize();
+      
+      const initTime = Date.now() - startTime;
+      console.log(`✅ TaskRunner initialized in ${initTime}ms`);
+      
+      return taskRunnerInstance;
+    } catch (error) {
+      console.error('❌ TaskRunner initialization failed:', error);
+      // Reset so we can try again later
+      taskRunnerInstance = null;
+      initializationPromise = null;
+      throw error;
+    }
+  })();
+
+  return initializationPromise;
 }
 
 export async function createTaskAction(problem: string): Promise<{ success: boolean; taskId?: string; error?: string }> {
@@ -28,6 +58,9 @@ export async function createTaskAction(problem: string): Promise<{ success: bool
 
     const runner = await getTaskRunner();
     const taskId = await runner.createTaskFromProblem(problem.trim());
+    
+    // Invalidate task cache
+    taskCache = null;
     
     // Revalidate the tasks page to show new data
     revalidatePath('/');
@@ -43,14 +76,33 @@ export async function createTaskAction(problem: string): Promise<{ success: bool
   }
 }
 
+// Simple cache for tasks to avoid repeated initialization
+let taskCache: { tasks: Task[]; timestamp: number } | null = null;
+const CACHE_DURATION = 5000; // 5 seconds cache
+
 export async function getTasksAction(): Promise<{ success: boolean; tasks?: Task[]; error?: string }> {
   try {
+    // Return cached tasks if available and fresh
+    if (taskCache && Date.now() - taskCache.timestamp < CACHE_DURATION) {
+      return { success: true, tasks: taskCache.tasks };
+    }
+
     const runner = await getTaskRunner();
     const tasks = await runner.getAllTasks();
+    
+    // Update cache
+    taskCache = { tasks, timestamp: Date.now() };
     
     return { success: true, tasks };
   } catch (error) {
     console.error('Error fetching tasks:', error);
+    
+    // Return cached tasks if available, even if stale
+    if (taskCache) {
+      console.log('Returning stale cached tasks due to error');
+      return { success: true, tasks: taskCache.tasks };
+    }
+    
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to fetch tasks' 

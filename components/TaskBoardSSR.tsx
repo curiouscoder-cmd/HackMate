@@ -3,27 +3,52 @@ import { getTasksAction } from '@/lib/actions/task-actions';
 import CollapsibleTaskSection from './CollapsibleTaskSection';
 import { Task } from '@/lib/agents/planner-agent';
 
-// Server component for SSR task board
+// Server component for SSR task board with timeout handling
 async function TaskBoardContent() {
-  const result = await getTasksAction();
+  let result: { success: boolean; tasks?: Task[]; error?: string };
   
-  if (!result.success || !result.tasks) {
+  try {
+    // Add timeout to prevent long blocking
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Task loading timeout')), 3000)
+    );
+    
+    result = await Promise.race([
+      getTasksAction(),
+      timeoutPromise
+    ]);
+    
+    if (!result.success || !result.tasks) {
+      return (
+        <div className="card">
+          <div className="text-center py-8 text-yellow-500">
+            <div className="text-2xl mb-2">⚡</div>
+            <div className="text-sm">System initializing... Tasks will appear shortly.</div>
+            <div className="text-xs mt-2 text-gray-500">Error: {result.error}</div>
+          </div>
+        </div>
+      );
+    }
+  } catch (error) {
+    // Handle timeout or other errors gracefully
     return (
       <div className="card">
-        <div className="text-center py-8 text-red-500">
-          <div className="text-2xl mb-2">❌</div>
-          <div className="text-sm">Failed to load tasks: {result.error}</div>
+        <div className="text-center py-8 text-blue-500">
+          <div className="text-2xl mb-2">🚀</div>
+          <div className="text-sm">System starting up... Please wait a moment.</div>
+          <div className="text-xs mt-2 text-gray-500">This may take a few seconds on first load.</div>
         </div>
       </div>
     );
   }
 
-  const tasks = result.tasks;
+  // This code will only run if we successfully got tasks
+  const tasks = result.tasks!;
   const tasksByStatus = {
-    queued: tasks.filter(task => task.status === 'queued'),
-    in_progress: tasks.filter(task => task.status === 'in_progress'),
-    done: tasks.filter(task => task.status === 'done'),
-    failed: tasks.filter(task => task.status === 'failed'),
+    queued: tasks.filter((task: Task) => task.status === 'queued'),
+    in_progress: tasks.filter((task: Task) => task.status === 'in_progress'),
+    done: tasks.filter((task: Task) => task.status === 'done'),
+    failed: tasks.filter((task: Task) => task.status === 'failed'),
   };
 
   const statusConfig = {

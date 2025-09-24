@@ -45,20 +45,50 @@ export interface RepoAnalysis {
 class GitHubIntegration {
   private octokit: Octokit;
   private isInitialized: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
+  private initializationStarted: boolean = false;
+  private analysisCache: Map<string, { data: RepoAnalysis; timestamp: number }> = new Map();
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     this.octokit = new Octokit();
   }
 
   /**
-   * Initialize GitHub integration with authentication
+   * Initialize GitHub integration with authentication (lazy)
    */
   async initialize(token?: string): Promise<void> {
+    // Return existing promise if initialization is already in progress
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    // Return immediately if already initialized
+    if (this.isInitialized) {
+      return Promise.resolve();
+    }
+
+    // Start initialization
+    this.initializationStarted = true;
+    this.initializationPromise = this.performInitialization(token);
+    
+    return this.initializationPromise;
+  }
+
+  /**
+   * Perform the actual initialization
+   */
+  private async performInitialization(token?: string): Promise<void> {
     try {
       const authToken = token || process.env.GITHUB_TOKEN;
       
       if (!authToken) {
-        console.warn('⚠️  GitHub token not provided. Some features may be limited.');
+        console.warn('⚠️  GitHub token not provided. GitHub features will be disabled.');
+        console.warn('💡 To enable GitHub integration:');
+        console.warn('   1. Create a Personal Access Token at https://github.com/settings/tokens');
+        console.warn('   2. Add GITHUB_TOKEN=your_token_here to your .env.local file');
+        console.warn('   3. Restart the application');
+        this.isInitialized = false;
         return;
       }
 
@@ -66,36 +96,75 @@ class GitHubIntegration {
         auth: authToken,
       });
 
-      // Test authentication
-      const { data: user } = await this.octokit.rest.users.getAuthenticated();
+      // Test authentication with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('GitHub authentication timeout')), 5000)
+      );
+      
+      const authPromise = this.octokit.rest.users.getAuthenticated();
+      const { data: user } = await Promise.race([authPromise, timeoutPromise]) as any;
+      
       console.log(`✅ GitHub integration initialized for user: ${user.login}`);
       this.isInitialized = true;
 
-      // Store authentication info in memory
-      await storeMemoryEntry({
-        type: 'context',
-        content: `GitHub integration initialized for user: ${user.login}`,
-        metadata: {
-          service: 'github',
-          user: user.login,
-          timestamp: new Date().toISOString(),
-          tags: ['github', 'auth', 'integration'],
-        }
-      });
+      // Store authentication info in memory (non-blocking)
+      this.storeAuthInfo(user.login).catch(err => 
+        console.warn('Failed to store GitHub auth info:', err.message)
+      );
 
     } catch (error) {
       console.error('❌ Failed to initialize GitHub integration:', error);
-      throw error;
+      console.error('💡 Please check your GitHub token and try again.');
+      this.isInitialized = false;
+      // Don't throw error - allow app to continue without GitHub features
     }
   }
 
   /**
-   * Analyze a GitHub repository comprehensively
+   * Store authentication info in memory (non-blocking)
+   */
+  private async storeAuthInfo(userLogin: string): Promise<void> {
+    try {
+      await storeMemoryEntry({
+        type: 'context',
+        content: `GitHub integration initialized for user: ${userLogin}`,
+        metadata: {
+          service: 'github',
+          user: userLogin,
+          timestamp: new Date().toISOString(),
+          tags: ['github', 'auth', 'integration'],
+        }
+      });
+    } catch (error) {
+      // Silently fail - memory storage is not critical
+    }
+  }
+
+  /**
+   * Analyze a GitHub repository comprehensively (with caching)
    */
   async analyzeRepository(repo: GitHubRepo): Promise<RepoAnalysis> {
+    const cacheKey = `${repo.owner}/${repo.repo}:${repo.branch || 'default'}`;
+    
+    // Check cache first
+    const cached = this.analysisCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+      console.log(`📋 Using cached analysis for: ${repo.owner}/${repo.repo}`);
+      return cached.data;
+    }
+
     console.log(`🔍 Analyzing repository: ${repo.owner}/${repo.repo}`);
 
     try {
+      // Ensure GitHub is initialized
+      if (!this.isInitialized && !this.initializationStarted) {
+        await this.initialize();
+      }
+
+      if (!this.isInitialized) {
+        throw new Error('GitHub integration not available');
+      }
+
       const [structure, issues, commits, repoInfo] = await Promise.all([
         this.getRepositoryStructure(repo),
         this.getRepositoryIssues(repo),
@@ -150,6 +219,23 @@ class GitHubIntegration {
       });
 
       console.log(`✅ Repository analysis complete: ${technologies.join(', ')} project`);
+      
+      // Cache the analysis
+      this.analysisCache.set(cacheKey, {
+        data: analysis,
+        timestamp: Date.now()
+      });
+      
+      // Clean up old cache entries (keep only last 10)
+      if (this.analysisCache.size > 10) {
+        const entries = Array.from(this.analysisCache.entries());
+        entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
+        this.analysisCache.clear();
+        entries.slice(0, 10).forEach(([key, value]) => {
+          this.analysisCache.set(key, value);
+        });
+      }
+      
       return analysis;
 
     } catch (error) {
@@ -384,12 +470,66 @@ class GitHubIntegration {
    */
   async createBranch(repo: GitHubRepo, branchName: string, baseBranch: string = 'main'): Promise<string> {
     try {
+      // First, try to get the default branch if 'main' doesn't exist
+      let actualBaseBranch = baseBranch;
+      
+      try {
+        await this.octokit.rest.git.getRef({
+          owner: repo.owner,
+          repo: repo.repo,
+          ref: `heads/${baseBranch}`,
+        });
+      } catch (error: any) {
+        if (error.status === 404) {
+          // Try 'master' as fallback
+          try {
+            await this.octokit.rest.git.getRef({
+              owner: repo.owner,
+              repo: repo.repo,
+              ref: 'heads/master',
+            });
+            actualBaseBranch = 'master';
+            console.log(`⚠️  Branch '${baseBranch}' not found, using 'master' instead`);
+          } catch (masterError: any) {
+            if (masterError.status === 404) {
+              // Get repository info to find default branch
+              const repoInfo = await this.octokit.rest.repos.get({
+                owner: repo.owner,
+                repo: repo.repo,
+              });
+              actualBaseBranch = repoInfo.data.default_branch;
+              console.log(`⚠️  Using default branch: ${actualBaseBranch}`);
+            } else {
+              throw masterError;
+            }
+          }
+        } else {
+          throw error;
+        }
+      }
+
       // Get the SHA of the base branch
       const { data: baseRef } = await this.octokit.rest.git.getRef({
         owner: repo.owner,
         repo: repo.repo,
-        ref: `heads/${baseBranch}`,
+        ref: `heads/${actualBaseBranch}`,
       });
+
+      // Check if branch already exists
+      try {
+        await this.octokit.rest.git.getRef({
+          owner: repo.owner,
+          repo: repo.repo,
+          ref: `heads/${branchName}`,
+        });
+        console.log(`⚠️  Branch '${branchName}' already exists, using existing branch`);
+        return branchName;
+      } catch (error: any) {
+        if (error.status !== 404) {
+          throw error;
+        }
+        // Branch doesn't exist, continue with creation
+      }
 
       // Create new branch
       await this.octokit.rest.git.createRef({
@@ -401,9 +541,17 @@ class GitHubIntegration {
 
       console.log(`✅ Created branch: ${branchName}`);
       return branchName;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to create branch:', error);
-      throw error;
+      
+      // Provide specific error messages
+      if (error.status === 403) {
+        throw new Error('GitHub token does not have permission to create branches. Please ensure your token has "repo" permissions.');
+      } else if (error.status === 404) {
+        throw new Error(`Repository ${repo.owner}/${repo.repo} not found or not accessible.`);
+      } else {
+        throw new Error(`Failed to create branch: ${error.message}`);
+      }
     }
   }
 
@@ -521,6 +669,75 @@ class GitHubIntegration {
    */
   isReady(): boolean {
     return this.isInitialized;
+  }
+
+  /**
+   * Get GitHub integration status with detailed information
+   */
+  getStatus(): { ready: boolean; message: string; instructions?: string[]; cacheInfo?: { size: number; maxAge: number }; permissions?: string[] } {
+    const status = {
+      ready: this.isInitialized,
+      message: '',
+      instructions: undefined as string[] | undefined,
+      permissions: undefined as string[] | undefined,
+      cacheInfo: {
+        size: this.analysisCache.size,
+        maxAge: Math.floor(this.CACHE_DURATION / 1000 / 60) // in minutes
+      }
+    };
+
+    if (this.isInitialized) {
+      status.message = 'GitHub integration is active and ready';
+      status.permissions = ['Read repositories', 'Analyze code', 'Create branches (if token has write access)'];
+      return status;
+    }
+    
+    const hasToken = !!process.env.GITHUB_TOKEN;
+    
+    if (!hasToken) {
+      status.message = 'GitHub token not configured';
+      status.instructions = [
+        'Create a Personal Access Token at https://github.com/settings/tokens',
+        'Select "repo" scope for full repository access',
+        'Add GITHUB_TOKEN=your_token_here to your .env.local file',
+        'Restart the application'
+      ];
+      return status;
+    }
+    
+    status.message = 'GitHub authentication failed - please check your token';
+    status.instructions = [
+      'Verify your GitHub token is valid and not expired',
+      'Ensure the token has "repo" scope for write access',
+      'Check if the token has access to the target repository',
+      'Verify your internet connection'
+    ];
+    
+    return status;
+  }
+
+  /**
+   * Clear analysis cache
+   */
+  clearCache(): void {
+    this.analysisCache.clear();
+    console.log('🗑️ GitHub analysis cache cleared');
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; keys: string[]; oldestEntry?: number } {
+    const entries = Array.from(this.analysisCache.entries());
+    const oldestEntry = entries.length > 0 
+      ? Math.min(...entries.map(([, value]) => value.timestamp))
+      : undefined;
+    
+    return {
+      size: this.analysisCache.size,
+      keys: entries.map(([key]) => key),
+      oldestEntry
+    };
   }
 }
 

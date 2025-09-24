@@ -1,37 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TaskRunner } from '@/lib/core/task-runner';
+import { getTasksAction } from '@/lib/actions/task-actions';
 
-// Global task runner instance
-let taskRunner: TaskRunner | null = null;
-
-async function getTaskRunner(): Promise<TaskRunner> {
-  if (!taskRunner) {
-    taskRunner = new TaskRunner({
-      enableAI: !!process.env.GEMINI_API_KEY,
-      enableGitHub: !!process.env.GITHUB_TOKEN,
-      enableSlack: !!process.env.SLACK_BOT_TOKEN,
-      enableMemory: !!process.env.CHROMA_URL
-    });
-    await taskRunner.initialize();
-  }
-  return taskRunner;
-}
+// Use the optimized task actions instead of direct TaskRunner access
 
 export async function GET() {
   try {
-    const runner = await getTaskRunner();
-    const tasks = await runner.getAllTasks();
+    // Use the optimized task action with caching and timeout
+    const result = await getTasksAction();
     
-    return NextResponse.json({ 
-      success: true,
-      tasks,
-      count: tasks.length 
-    });
+    if (result.success && result.tasks) {
+      return NextResponse.json({ 
+        success: true,
+        tasks: result.tasks,
+        count: result.tasks.length 
+      });
+    } else {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: result.error || 'Failed to fetch tasks',
+          tasks: [] // Return empty array for client compatibility
+        },
+        { status: 200 } // Return 200 to avoid client errors during startup
+      );
+    }
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    console.error('Error in tasks API:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch tasks', message: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+      { 
+        success: false,
+        error: 'System initializing, please try again shortly',
+        tasks: [] // Return empty array for client compatibility
+      },
+      { status: 200 } // Return 200 to avoid client errors during startup
     );
   }
 }
@@ -43,23 +44,31 @@ export async function POST(request: NextRequest) {
 
     if (!problem || typeof problem !== 'string') {
       return NextResponse.json(
-        { error: 'Problem statement is required' },
+        { success: false, error: 'Problem statement is required' },
         { status: 400 }
       );
     }
 
-    const runner = await getTaskRunner();
-    const taskId = await runner.createTaskFromProblem(problem.trim());
+    // Use the optimized createTaskAction
+    const { createTaskAction } = await import('@/lib/actions/task-actions');
+    const result = await createTaskAction(problem.trim());
 
-    return NextResponse.json({
-      success: true,
-      taskId,
-      message: 'Task creation initiated'
-    });
+    if (result.success) {
+      return NextResponse.json({
+        success: true,
+        taskId: result.taskId,
+        message: 'Task creation initiated'
+      });
+    } else {
+      return NextResponse.json(
+        { success: false, error: result.error || 'Failed to create task' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Error creating task:', error);
     return NextResponse.json(
-      { error: 'Failed to create task', message: error instanceof Error ? error.message : 'Unknown error' },
+      { success: false, error: 'Failed to create task', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

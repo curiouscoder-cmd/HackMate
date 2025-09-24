@@ -18,6 +18,7 @@ export interface GitHubWorkflowConfig {
   prTitle?: string;
   prDescription?: string;
   autoMerge?: boolean;
+  readOnlyMode?: boolean;
 }
 
 export interface GitHubWorkflowResult {
@@ -27,10 +28,17 @@ export interface GitHubWorkflowResult {
   pullRequestNumber?: number;
   changes: string[];
   errors: string[];
+  readOnlyMode?: boolean;
+  suggestions?: string[];
+  codeAnalysis?: string;
 }
 
 export class GitHubWorkflow {
   private taskRunner: TaskRunner;
+  private initializationPromise: Promise<void> | null = null;
+  private isInitialized: boolean = false;
+  private workflowCache: Map<string, { result: GitHubWorkflowResult; timestamp: number }> = new Map();
+  private readonly CACHE_DURATION = 30 * 1000; // 30 seconds for workflow results
 
   constructor() {
     this.taskRunner = new TaskRunner();
@@ -40,6 +48,14 @@ export class GitHubWorkflow {
    * Execute a complete GitHub workflow: analyze repo, create tasks, implement changes, create PR
    */
   async executeWorkflow(config: GitHubWorkflowConfig): Promise<GitHubWorkflowResult> {
+    // Check cache first for recent identical requests
+    const cacheKey = `${config.repositoryUrl}:${config.taskDescription}`;
+    const cached = this.workflowCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+      console.log('📋 Using cached workflow result');
+      return cached.result;
+    }
+
     const result: GitHubWorkflowResult = {
       success: false,
       changes: [],
@@ -49,8 +65,8 @@ export class GitHubWorkflow {
     try {
       console.log(`🚀 Starting GitHub workflow for: ${config.repositoryUrl}`);
       
-      // Step 1: Initialize GitHub integration
-      await this.initializeGitHub();
+      // Step 1: Initialize GitHub integration (lazy)
+      await this.ensureInitialized();
 
       // Step 2: Parse repository URL
       const repo = parseGitHubUrl(config.repositoryUrl);
@@ -58,7 +74,7 @@ export class GitHubWorkflow {
         throw new Error('Invalid GitHub repository URL');
       }
 
-      // Step 3: Analyze repository
+      // Step 3: Analyze repository (with caching)
       console.log('📊 Analyzing repository...');
       const analysis = await githubIntegration.analyzeRepository(repo);
       result.repositoryAnalysis = analysis;
@@ -67,46 +83,243 @@ export class GitHubWorkflow {
       console.log('🧠 Generating AI tasks...');
       const tasks = await this.generateTasksFromAnalysis(analysis, config.taskDescription, repo);
 
-      // Step 5: Create development branch
-      if (config.createPR !== false) {
-        const branchName = generateBranchName(config.taskDescription);
-        await githubIntegration.createBranch(repo, branchName, config.baseBranch || 'main');
-        result.branchName = branchName;
-        repo.branch = branchName;
+      // Step 5: Check permissions and decide on read-only mode
+      let readOnlyMode = config.readOnlyMode || false;
+      
+      if (config.createPR !== false && !readOnlyMode) {
+        try {
+          // Test if we can create branches
+          const branchName = generateBranchName(config.taskDescription);
+          await githubIntegration.createBranch(repo, branchName, config.baseBranch || 'main');
+          result.branchName = branchName;
+          repo.branch = branchName;
+        } catch (error: any) {
+          if (error.message.includes('permission') || error.message.includes('403')) {
+            console.log('⚠️  No write permissions detected, switching to read-only mode');
+            readOnlyMode = true;
+            result.readOnlyMode = true;
+            result.errors.push('GitHub token has read-only access. Providing analysis and suggestions instead.');
+          } else {
+            throw error;
+          }
+        }
       }
 
-      // Step 6: Execute tasks and implement changes
-      console.log('⚙️ Executing tasks...');
-      const taskResults = await this.executeTasks(tasks, repo);
-      result.changes = taskResults.changes;
-      result.errors = taskResults.errors;
+      if (readOnlyMode) {
+        // Step 6: Read-only analysis and suggestions
+        console.log('🔍 Performing read-only analysis...');
+        const analysisResult = await this.performReadOnlyAnalysis(tasks, repo, config.taskDescription);
+        result.suggestions = analysisResult.suggestions;
+        result.codeAnalysis = analysisResult.analysis;
+        result.changes = [`Read-only analysis completed for: ${config.taskDescription}`];
+      } else {
+        // Step 6: Execute tasks and implement changes
+        console.log('⚙️ Executing tasks...');
+        const taskResults = await this.executeTasks(tasks, repo);
+        result.changes = taskResults.changes;
+        result.errors.push(...taskResults.errors);
 
-      // Step 7: Create pull request if requested
-      if (config.createPR !== false && result.branchName && result.changes.length > 0) {
-        console.log('📝 Creating pull request...');
-        const prNumber = await this.createPullRequest(repo, config, result);
-        result.pullRequestNumber = prNumber;
+        // Step 7: Create pull request if requested
+        if (config.createPR !== false && result.branchName && result.changes.length > 0) {
+          console.log('📝 Creating pull request...');
+          try {
+            const prNumber = await this.createPullRequest(repo, config, result);
+            result.pullRequestNumber = prNumber;
+          } catch (error: any) {
+            result.errors.push(`Failed to create PR: ${error.message}`);
+          }
+        }
       }
 
       result.success = result.errors.length === 0;
       console.log(`✅ GitHub workflow completed successfully!`);
+
+      // Cache the result
+      this.workflowCache.set(cacheKey, {
+        result: { ...result },
+        timestamp: Date.now()
+      });
+
+      // Clean up old cache entries
+      this.cleanupCache();
 
       return result;
 
     } catch (error) {
       console.error('❌ GitHub workflow failed:', error);
       result.errors.push(error instanceof Error ? error.message : String(error));
+      
+      // Don't cache failed results
       return result;
     }
   }
 
   /**
-   * Initialize GitHub integration
+   * Ensure workflow is initialized (singleton pattern)
    */
-  private async initializeGitHub(): Promise<void> {
-    if (!githubIntegration.isReady()) {
-      await githubIntegration.initialize();
+  private async ensureInitialized(): Promise<void> {
+    if (this.isInitialized) {
+      return;
     }
+
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    this.initializationPromise = this.performInitialization();
+    return this.initializationPromise;
+  }
+
+  /**
+   * Perform actual initialization
+   */
+  private async performInitialization(): Promise<void> {
+    try {
+      // Initialize GitHub integration with timeout
+      const initPromise = githubIntegration.initialize();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('GitHub initialization timeout')), 5000)
+      );
+      
+      await Promise.race([initPromise, timeoutPromise]);
+      
+      if (!githubIntegration.isReady()) {
+        throw new Error('GitHub integration not available');
+      }
+      
+      this.isInitialized = true;
+      console.log('✅ GitHub workflow initialized');
+    } catch (error) {
+      console.error('❌ GitHub workflow initialization failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clean up old cache entries
+   */
+  private cleanupCache(): void {
+    const now = Date.now();
+    const entries = Array.from(this.workflowCache.entries());
+    for (const [key, value] of entries) {
+      if (now - value.timestamp > this.CACHE_DURATION * 2) {
+        this.workflowCache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Clear workflow cache
+   */
+  clearCache(): void {
+    this.workflowCache.clear();
+    console.log('🗑️ GitHub workflow cache cleared');
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; keys: string[] } {
+    return {
+      size: this.workflowCache.size,
+      keys: Array.from(this.workflowCache.keys())
+    };
+  }
+
+  /**
+   * Perform read-only analysis when write permissions are not available
+   */
+  private async performReadOnlyAnalysis(
+    tasks: Task[], 
+    repo: GitHubRepo, 
+    taskDescription: string
+  ): Promise<{ suggestions: string[]; analysis: string }> {
+    const suggestions: string[] = [];
+    let analysis = '';
+
+    try {
+      // Analyze the repository structure and provide suggestions
+      const repoAnalysis = await githubIntegration.analyzeRepository(repo);
+      
+      analysis = `## Repository Analysis for: ${repo.owner}/${repo.repo}\n\n`;
+      analysis += `**Task**: ${taskDescription}\n\n`;
+      analysis += `**Technologies**: ${repoAnalysis.technologies.join(', ')}\n`;
+      analysis += `**Main Language**: ${repoAnalysis.mainLanguage}\n`;
+      analysis += `**File Count**: ${repoAnalysis.structure.length}\n`;
+      analysis += `**Open Issues**: ${repoAnalysis.issues.length}\n\n`;
+      
+      // Generate specific suggestions based on the task
+      suggestions.push(`📋 **Implementation Plan for "${taskDescription}"**`);
+      
+      if (repoAnalysis.technologies.includes('TypeScript') || repoAnalysis.technologies.includes('JavaScript')) {
+        suggestions.push('🔧 Consider using TypeScript for better type safety');
+        suggestions.push('📦 Review package.json for dependency updates');
+      }
+      
+      if (repoAnalysis.technologies.includes('React') || repoAnalysis.technologies.includes('Next.js')) {
+        suggestions.push('⚛️ Follow React best practices for component structure');
+        suggestions.push('🎨 Consider using Tailwind CSS for consistent styling');
+      }
+      
+      // Add task-specific suggestions
+      if (taskDescription.toLowerCase().includes('ui') || taskDescription.toLowerCase().includes('component')) {
+        suggestions.push('🎨 Ensure UI components follow the existing design system');
+        suggestions.push('📱 Test responsive design across different screen sizes');
+        suggestions.push('♿ Consider accessibility (ARIA labels, keyboard navigation)');
+      }
+      
+      if (taskDescription.toLowerCase().includes('api') || taskDescription.toLowerCase().includes('endpoint')) {
+        suggestions.push('🔒 Implement proper authentication and authorization');
+        suggestions.push('📝 Add comprehensive API documentation');
+        suggestions.push('🧪 Include unit and integration tests');
+      }
+      
+      if (taskDescription.toLowerCase().includes('performance') || taskDescription.toLowerCase().includes('optimize')) {
+        suggestions.push('⚡ Profile performance bottlenecks');
+        suggestions.push('💾 Implement caching strategies');
+        suggestions.push('📊 Add performance monitoring');
+      }
+      
+      // Generic suggestions
+      suggestions.push('🧪 Add comprehensive tests for new functionality');
+      suggestions.push('📚 Update documentation and README if needed');
+      suggestions.push('🔍 Run linting and code quality checks');
+      suggestions.push('🚀 Consider CI/CD pipeline integration');
+      
+      // Add code patterns analysis
+      if (repoAnalysis.codePatterns.length > 0) {
+        analysis += `**Code Patterns Found**:\n`;
+        repoAnalysis.codePatterns.forEach(pattern => {
+          analysis += `- ${pattern}\n`;
+        });
+        analysis += '\n';
+      }
+      
+      // Add recent activity context
+      if (repoAnalysis.recentCommits.length > 0) {
+        analysis += `**Recent Activity**:\n`;
+        repoAnalysis.recentCommits.slice(0, 3).forEach(commit => {
+          analysis += `- ${commit.message} (${commit.author})\n`;
+        });
+        analysis += '\n';
+      }
+      
+      analysis += `**Next Steps**:\n`;
+      analysis += `1. Review the suggestions above\n`;
+      analysis += `2. Create a new branch for your changes\n`;
+      analysis += `3. Implement the changes following the repository patterns\n`;
+      analysis += `4. Test thoroughly before creating a pull request\n`;
+      analysis += `5. Update documentation as needed\n\n`;
+      
+      analysis += `**Note**: This analysis was performed in read-only mode. To implement changes automatically, please ensure your GitHub token has 'repo' permissions.`;
+      
+    } catch (error) {
+      console.error('Error in read-only analysis:', error);
+      suggestions.push('❌ Unable to complete full analysis due to an error');
+      analysis = `Error performing analysis: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
+
+    return { suggestions, analysis };
   }
 
   /**

@@ -32,8 +32,12 @@ export class TaskRunner {
 
   async initialize(): Promise<void> {
     try {
+      // Initialize memory asynchronously in the background to speed up startup
       if (this.config.enableMemory) {
-        await this.memory.initialize();
+        // Don't await memory initialization to speed up startup
+        this.memory.initialize().catch(error => {
+          console.error('⚠️ Memory initialization failed, continuing without memory:', error);
+        });
       }
       console.log('✅ TaskRunner initialized successfully');
     } catch (error) {

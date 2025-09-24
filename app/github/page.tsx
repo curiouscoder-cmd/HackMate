@@ -1,4 +1,6 @@
 import GitHubWorkflow from '@/components/GitHubWorkflow'
+import GitHubStatus from '@/components/GitHubStatus'
+import PerformanceMonitor from '@/components/PerformanceMonitor'
 import Header from '@/components/Header'
 
 export const metadata = {
@@ -13,6 +15,11 @@ export default function GitHubPage() {
         {/* Header */}
         <div className="fade-in">
           <Header />
+        </div>
+        
+        {/* GitHub Status Section */}
+        <div className="mt-8 fade-in">
+          <GitHubStatus />
         </div>
         
         {/* GitHub Workflow Section */}
@@ -174,6 +181,9 @@ export default function GitHubPage() {
           </div>
         </div>
       </div>
+      
+      {/* Performance Monitor */}
+      <PerformanceMonitor />
     </main>
   )
 }

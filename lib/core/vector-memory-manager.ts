@@ -53,7 +53,7 @@ let memoryState: VectorMemoryState = {
 
 console.log('🧠 Vector Memory Manager initializing...');
 
-// Helper function to ensure index exists
+// Helper function to ensure index exists (now with lazy creation)
 const ensureIndexExists = async (): Promise<void> => {
   if (!memoryState.pinecone) return;
 
@@ -75,13 +75,14 @@ const ensureIndexExists = async (): Promise<void> => {
         }
       });
 
-      // Wait for index to be ready
-      console.log('⏳ Waiting for index to be ready...');
-      await waitForIndexReady();
+      // Don't wait for index to be ready during initialization
+      // This will be handled when the index is first used
+      console.log('📝 Index creation initiated, will be ready shortly...');
     }
   } catch (error) {
     console.error('Error ensuring index exists:', error);
-    throw error;
+    // Don't throw error, fall back to in-memory storage
+    memoryState.usePinecone = false;
   }
 };
 
@@ -140,9 +141,11 @@ const calculateTextSimilarity = (text: string, query: string): number => {
   return commonWords.length / Math.max(textWords.length, queryWords.length);
 };
 
-// Initialize the vector memory system
+// Initialize the vector memory system with optimized lazy loading
 export const initializeVectorMemory = async (): Promise<void> => {
   try {
+    const startTime = Date.now();
+    
     // Try to initialize Pinecone
     if (process.env.PINECONE_API_KEY) {
       memoryState.pinecone = new Pinecone({
@@ -154,10 +157,12 @@ export const initializeVectorMemory = async (): Promise<void> => {
         memoryState.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
       }
 
-      // Test connection
-      await ensureIndexExists();
+      // Skip index creation during initialization to speed up startup
+      // Index will be created lazily when first needed
       memoryState.usePinecone = true;
-      console.log('✅ Vector Memory Manager initialized with Pinecone');
+      
+      const initTime = Date.now() - startTime;
+      console.log(`✅ Vector Memory Manager initialized with Pinecone in ${initTime}ms`);
     } else {
       console.log('⚠️  Pinecone not configured, using fallback in-memory storage');
       memoryState.usePinecone = false;
@@ -171,7 +176,7 @@ export const initializeVectorMemory = async (): Promise<void> => {
   }
 };
 
-// Store a memory entry
+// Store a memory entry with lazy index creation
 export const storeMemoryEntry = async (entry: Omit<VectorMemoryEntry, 'id' | 'embedding'>): Promise<string> => {
   const id = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -186,6 +191,9 @@ export const storeMemoryEntry = async (entry: Omit<VectorMemoryEntry, 'id' | 'em
 
   if (memoryState.usePinecone && memoryState.pinecone && memoryState.genAI) {
     try {
+      // Ensure index exists before first use
+      await ensureIndexExists();
+      
       // Generate embedding
       const embedding = await generateEmbedding(entry.content);
       memoryEntry.embedding = embedding;
@@ -250,10 +258,13 @@ export const storeMemoryEntry = async (entry: Omit<VectorMemoryEntry, 'id' | 'em
   return id;
 };
 
-// Retrieve memory entries
+// Retrieve memory entries with lazy index creation
 export const retrieveMemoryEntries = async (query: string, limit: number = 5): Promise<VectorSearchResult[]> => {
   if (memoryState.usePinecone && memoryState.pinecone && memoryState.genAI) {
     try {
+      // Ensure index exists before first use
+      await ensureIndexExists();
+      
       // Generate query embedding
       const queryEmbedding = await generateEmbedding(query);
 

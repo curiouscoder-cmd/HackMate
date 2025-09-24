@@ -94,6 +94,19 @@ export async function GET(request: NextRequest) {
     
     await githubIntegration.initialize();
     
+    // Check if GitHub integration is ready
+    const status = githubIntegration.getStatus();
+    if (!status.ready) {
+      return NextResponse.json({
+        success: false,
+        error: 'GitHub integration not available',
+        message: status.message,
+        instructions: status.instructions,
+        githubStatus: status,
+        timestamp: new Date().toISOString(),
+      }, { status: 503 }); // Service Unavailable
+    }
+    
     const repo = parseGitHubUrl(repositoryUrl);
     if (!repo) {
       return NextResponse.json(
@@ -122,6 +135,7 @@ export async function GET(request: NextRequest) {
           date: c.date,
         })),
       },
+      githubStatus: status,
       timestamp: new Date().toISOString(),
     });
 
