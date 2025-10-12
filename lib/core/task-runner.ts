@@ -100,12 +100,21 @@ export class TaskRunner {
   }
 
   private async executeTasksAsync(taskIds: string[]): Promise<void> {
-    // Execute tasks asynchronously without blocking
-    setTimeout(async () => {
+    // In serverless environments, we need to execute synchronously
+    // to avoid timeout issues. For production, consider using a queue system.
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      // Execute synchronously in production
       for (const taskId of taskIds) {
         await this.executeTask(taskId);
       }
-    }, 100);
+    } else {
+      // Execute asynchronously in development
+      setTimeout(async () => {
+        for (const taskId of taskIds) {
+          await this.executeTask(taskId);
+        }
+      }, 100);
+    }
   }
 
   async executeTask(taskId: string): Promise<void> {
